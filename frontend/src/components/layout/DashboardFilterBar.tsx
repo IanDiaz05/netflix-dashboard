@@ -1,5 +1,6 @@
-import type { ReactNode } from "react"
-import { XIcon } from "lucide-react"
+import { useState, type ReactNode } from "react"
+import { SlidersHorizontalIcon, XIcon } from "lucide-react"
+import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import {
   Select,
@@ -16,6 +17,7 @@ import {
   releasePeriodOptions,
 } from "@/config/filters"
 import type { FilterOption } from "@/config/filters"
+import { cn } from "@/lib/utils"
 
 interface FilterControlProps {
   label: string
@@ -24,7 +26,7 @@ interface FilterControlProps {
 
 function FilterControl({ label, children }: FilterControlProps) {
   return (
-    <div className="flex items-center gap-2">
+    <div className="flex min-w-0 flex-col gap-1 md:flex-row md:items-center md:gap-2">
       <span className="text-xs text-muted-foreground">{label}</span>
       {children}
     </div>
@@ -46,7 +48,11 @@ function FilterSelect<T extends string>({
 }: FilterSelectProps<T>) {
   return (
     <Select value={value} onValueChange={onValueChange}>
-      <SelectTrigger size="sm" aria-label={ariaLabel} className="w-40">
+      <SelectTrigger
+        size="sm"
+        aria-label={ariaLabel}
+        className="w-full md:w-40"
+      >
         <SelectValue />
       </SelectTrigger>
       <SelectContent>
@@ -65,7 +71,9 @@ function FilterSelect<T extends string>({
 /**
  * Responsive strip of global tactical filters for the Content Marketing
  * Strategist. Selections are mirrored to URL search params through
- * `DashboardFiltersContext`, so every view reacts to changes.
+ * `DashboardFiltersContext`, so every view reacts to changes. Below the
+ * `md` breakpoint the strip collapses behind a toggle to keep the header
+ * compact on phones.
  */
 export function DashboardFilterBar() {
   const {
@@ -77,43 +85,70 @@ export function DashboardFilterBar() {
     setRating,
     clearFilters,
     hasActiveFilters,
+    activeFilterLabels,
   } = useDashboardFilters()
+  const [isOpen, setIsOpen] = useState(false)
 
   return (
-    <div className="flex flex-wrap items-center gap-x-4 gap-y-2 px-6 py-2.5">
-      <FilterControl label="Formato">
-        <FilterSelect
-          value={format}
-          onValueChange={setFormat}
-          options={contentFormatOptions}
-          ariaLabel="Filtrar por formato"
-        />
-      </FilterControl>
-      <FilterControl label="Período de estreno">
-        <FilterSelect
-          value={period}
-          onValueChange={setPeriod}
-          options={releasePeriodOptions}
-          ariaLabel="Filtrar por período de estreno"
-        />
-      </FilterControl>
-      <FilterControl label="Clasificación">
-        <FilterSelect
-          value={rating}
-          onValueChange={setRating}
-          options={maturityRatingOptions}
-          ariaLabel="Filtrar por clasificación de edad"
-        />
-      </FilterControl>
-      <Button
-        variant="ghost"
-        size="sm"
-        onClick={clearFilters}
-        disabled={!hasActiveFilters}
+    <div>
+      <div className="flex items-center gap-2 px-4 py-1.5 md:hidden">
+        <Button
+          variant="ghost"
+          size="sm"
+          className="-ml-2.5"
+          onClick={() => setIsOpen((current) => !current)}
+          aria-expanded={isOpen}
+          aria-controls="dashboard-filters"
+        >
+          <SlidersHorizontalIcon aria-hidden="true" />
+          Filtros
+          {activeFilterLabels.length > 0 ? (
+            <Badge variant="secondary">{activeFilterLabels.length}</Badge>
+          ) : null}
+        </Button>
+      </div>
+      <div
+        id="dashboard-filters"
+        className={cn(
+          "gap-2 px-4 pb-3 sm:grid-cols-2 md:flex md:flex-wrap md:items-center md:gap-x-4 md:gap-y-2 md:px-6 md:py-2.5",
+          isOpen ? "grid grid-cols-1" : "hidden md:flex",
+        )}
       >
-        <XIcon aria-hidden="true" />
-        Limpiar filtros
-      </Button>
+        <FilterControl label="Formato">
+          <FilterSelect
+            value={format}
+            onValueChange={setFormat}
+            options={contentFormatOptions}
+            ariaLabel="Filtrar por formato"
+          />
+        </FilterControl>
+        <FilterControl label="Período de estreno">
+          <FilterSelect
+            value={period}
+            onValueChange={setPeriod}
+            options={releasePeriodOptions}
+            ariaLabel="Filtrar por período de estreno"
+          />
+        </FilterControl>
+        <FilterControl label="Clasificación">
+          <FilterSelect
+            value={rating}
+            onValueChange={setRating}
+            options={maturityRatingOptions}
+            ariaLabel="Filtrar por clasificación de edad"
+          />
+        </FilterControl>
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={clearFilters}
+          disabled={!hasActiveFilters}
+          className="justify-self-start md:justify-self-auto"
+        >
+          <XIcon aria-hidden="true" />
+          Limpiar filtros
+        </Button>
+      </div>
     </div>
   )
 }
