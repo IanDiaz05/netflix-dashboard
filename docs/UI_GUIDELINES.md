@@ -35,13 +35,13 @@ Typography: Geist Variable (`--font-sans`). Body `text-sm`; page titles in the h
 
 ## Component rules
 
-- Use shadcn primitives in `src/components/ui` (`button`, `skeleton`, `card`, `separator`, `badge`, `input`, `select`) before creating new widgets.
-- Loading is the default Phase 1 state: `DashboardPageSkeleton` plus `Skeleton`.
+- Use shadcn primitives in `src/components/ui` (`button`, `skeleton`, `card`, `separator`, `badge`, `input`, `select`, `sheet`) before creating new widgets.
+- Loading is the default state until FastAPI is connected: every data widget in `src/components/widgets` renders its own structurally accurate `Skeleton` while `isLoading` is true, and a Spanish error fallback with a retry button when the request fails.
 - Do not add emoji in the interface.
 - Prefer lucide-react for icons, at `size-4`, with `aria-hidden` when decorative.
 
 ## Layout
 
-- Persistent left sidebar (~15rem), top header with the Spanish page title, main canvas with `gap-6` sections.
+- Persistent left sidebar (~15rem), top header with the Spanish page title plus the global tactical filter strip (formato, período de estreno, clasificación), main canvas with `gap-6` sections.
 - Overview: KPI row then two chart cards.
 - Charts (later phase) should use tokenized colors only, Spanish titles, and short axis labels.

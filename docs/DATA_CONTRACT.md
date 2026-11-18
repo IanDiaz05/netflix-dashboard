@@ -35,8 +35,9 @@ Defined in `frontend/src/types/catalog.ts`:
 
 - `CatalogItemRecord` — snake_case payload matching the twelve source columns.
 - `CatalogItem` — camelCase dashboard model with parsed arrays and duration parts.
-- `DashboardKPIs` — headline metrics for the overview.
+- `DashboardKPIs` — headline metrics for the overview, including the leading country and genre.
 - `ChartDataPoint` — `{ label, value, category? }` for all chart series.
+- `DurationDistribution` — duration breakdown split by unit (`minutes` for movies, `seasons` for shows).
 - `CatalogFilters` — shared query filters (`query`, `type`, year range, `country`, `genre`, `rating`).
 - `GenreAndRatingStats` / `CatalogListResponse` — aggregated and paginated API envelopes.
 
