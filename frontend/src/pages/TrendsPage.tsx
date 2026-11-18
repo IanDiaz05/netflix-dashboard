@@ -5,7 +5,7 @@ import { dashboardService } from "@/services/dashboardService"
 /** Trends route: temporal evolution plus the duration breakdown. */
 export function TrendsPage() {
   return (
-    <div className="flex flex-col gap-6">
+    <div className="flex flex-col gap-4 sm:gap-6">
       <section
         aria-label="Tendencias temporales"
         className="grid gap-4 xl:grid-cols-3"

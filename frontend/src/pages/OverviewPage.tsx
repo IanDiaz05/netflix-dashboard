@@ -22,7 +22,7 @@ function formatLeadingGenre(kpis: DashboardKPIs): string {
 /** Overview route: KPI row plus format and rating distribution charts. */
 export function OverviewPage() {
   return (
-    <div className="flex flex-col gap-6">
+    <div className="flex flex-col gap-4 sm:gap-6">
       <section
         aria-label="Indicadores clave"
         className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4"

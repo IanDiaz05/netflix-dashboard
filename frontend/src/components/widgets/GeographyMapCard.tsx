@@ -51,13 +51,13 @@ export function GeographyMapCard<T>({
       <CardContent>
         {isLoading ? (
           <div className="flex flex-col gap-3">
-            <Skeleton className="h-80 w-full" />
-            <div className="flex items-center justify-center gap-2">
-              <Skeleton className="h-3 w-20" />
+            <Skeleton className="h-56 w-full sm:h-72 lg:h-80" />
+            <div className="flex flex-wrap items-center justify-center gap-2">
+              <Skeleton className="hidden h-3 w-20 sm:block" />
               {Array.from({ length: SKELETON_LEGEND_STEPS }).map((_, index) => (
                 <Skeleton key={index} className="size-4 rounded-sm" />
               ))}
-              <Skeleton className="h-3 w-20" />
+              <Skeleton className="hidden h-3 w-20 sm:block" />
             </div>
           </div>
         ) : error ? (

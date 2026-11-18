@@ -34,14 +34,16 @@ function DetailField({ label, value }: DetailFieldProps) {
  * clicked after data resolves, and renders Spanish field labels.
  */
 export function TitleDetailSheet({ item, onOpenChange }: TitleDetailSheetProps) {
+  const typeLabel = item?.type === "Movie" ? "Película" : "Serie"
+
   return (
     <Sheet open={item !== null} onOpenChange={onOpenChange}>
       <SheetContent side="right" className="w-full overflow-y-auto sm:max-w-md">
-        <SheetHeader>
+        <SheetHeader className="pr-10">
           <SheetTitle>{item?.title ?? ""}</SheetTitle>
           <SheetDescription>
             {item
-              ? `${item.type} · ${item.releaseYear} · ${item.rating ?? "Sin clasificación"}`
+              ? `${typeLabel} · ${item.releaseYear} · ${item.rating ?? "Sin clasificación"}`
               : ""}
           </SheetDescription>
         </SheetHeader>

@@ -53,7 +53,7 @@ export function ChartCard<T>({
       </CardHeader>
       <CardContent>
         {isLoading ? (
-          <div className="flex h-64 flex-col gap-3">
+          <div className="flex h-56 flex-col gap-3 sm:h-64">
             <div className="flex min-h-0 flex-1 gap-3">
               <Skeleton className="h-full w-px shrink-0" />
               <div className="flex min-h-0 flex-1 items-end gap-2">
