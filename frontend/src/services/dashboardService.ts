@@ -4,6 +4,7 @@ import type {
   CatalogListResponse,
   ChartDataPoint,
   DashboardKPIs,
+  DurationDistribution,
   GenreAndRatingStats,
 } from "@/types/catalog"
 
@@ -34,6 +35,10 @@ export const dashboardService = {
 
   getGenreAndRatingStats(_filters?: CatalogFilters): Promise<GenreAndRatingStats> {
     return pending<GenreAndRatingStats>()
+  },
+
+  getDurationDistribution(_filters?: CatalogFilters): Promise<DurationDistribution> {
+    return pending<DurationDistribution>()
   },
 
   getCatalogItems(_params?: CatalogListParams): Promise<CatalogListResponse> {

@@ -53,6 +53,8 @@ export interface DashboardKPIs {
   uniqueCountries: number
   uniqueGenres: number
   averageMovieDurationMinutes: number | null
+  leadingCountry: string | null
+  leadingGenre: string | null
 }
 
 export interface ChartDataPoint {
@@ -64,6 +66,15 @@ export interface ChartDataPoint {
 export interface GenreAndRatingStats {
   genres: ChartDataPoint[]
   ratings: ChartDataPoint[]
+}
+
+/**
+ * Duration breakdown split by unit, never mixed in one numeric series.
+ * `minutes` buckets movies, `seasons` buckets shows.
+ */
+export interface DurationDistribution {
+  minutes: ChartDataPoint[]
+  seasons: ChartDataPoint[]
 }
 
 export interface CatalogListResponse {
