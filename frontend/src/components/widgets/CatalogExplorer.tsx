@@ -36,6 +36,14 @@ const CATALOG_COLUMNS = [
 const SKELETON_ROW_COUNT = 8
 const PAGE_SIZE = 20
 
+function formatTypeLabel(type: CatalogItem["type"]): string {
+  return type === "Movie" ? "Película" : "Serie"
+}
+
+function formatGenrePreview(genres: string[]): string {
+  return genres.length > 0 ? genres.slice(0, 2).join(", ") : "Sin géneros"
+}
+
 interface CatalogResultsProps {
   catalogFilters: CatalogFilters
   searchQuery: string
@@ -77,80 +85,130 @@ function CatalogResults({ catalogFilters, searchQuery }: CatalogResultsProps) {
           </div>
         </div>
       ) : (
-        <div className="overflow-x-auto rounded-lg border border-border">
-          <table className="w-full text-sm">
-            <thead>
-              <tr className="border-b border-border bg-muted/50">
-                {CATALOG_COLUMNS.map((column) => (
-                  <th
-                    key={column}
-                    scope="col"
-                    className="px-3 py-2 text-left text-xs font-medium text-muted-foreground"
+        <>
+          <div className="flex flex-col gap-2 md:hidden">
+            {isLoading
+              ? Array.from({ length: SKELETON_ROW_COUNT }).map((_, index) => (
+                  <div
+                    key={index}
+                    className="flex flex-col gap-2 rounded-lg border border-border p-3"
                   >
-                    {column}
-                  </th>
+                    <div className="flex items-start justify-between gap-3">
+                      <Skeleton className="h-4 w-3/4" />
+                      <Skeleton className="h-5 w-16 rounded-full" />
+                    </div>
+                    <div className="flex gap-3">
+                      <Skeleton className="h-3 w-10" />
+                      <Skeleton className="h-3 w-10" />
+                      <Skeleton className="h-3 w-16" />
+                    </div>
+                    <Skeleton className="h-3 w-2/3" />
+                  </div>
+                ))
+              : data?.items.map((item) => (
+                  <button
+                    key={item.showId}
+                    type="button"
+                    onClick={() => setSelectedItem(item)}
+                    className="flex w-full flex-col gap-2 rounded-lg border border-border p-3 text-left transition-colors outline-none hover:bg-muted/50 focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50"
+                  >
+                    <div className="flex items-start justify-between gap-3">
+                      <span className="min-w-0 flex-1 text-sm font-medium break-words">
+                        {item.title}
+                      </span>
+                      <Badge variant="outline">
+                        {formatTypeLabel(item.type)}
+                      </Badge>
+                    </div>
+                    <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-muted-foreground">
+                      <span>{item.releaseYear}</span>
+                      <span>{item.rating ?? "NR"}</span>
+                      <span>{item.duration}</span>
+                    </div>
+                    <p className="line-clamp-2 text-xs text-muted-foreground">
+                      {formatGenrePreview(item.genres)}
+                    </p>
+                  </button>
                 ))}
-              </tr>
-            </thead>
-            <tbody>
-              {isLoading
-                ? Array.from({ length: SKELETON_ROW_COUNT }).map((_, index) => (
-                    <tr
-                      key={index}
-                      className="border-b border-border last:border-b-0"
+          </div>
+
+          <div className="hidden overflow-x-auto rounded-lg border border-border md:block">
+            <table className="w-full min-w-[40rem] text-sm">
+              <thead>
+                <tr className="border-b border-border bg-muted/50">
+                  {CATALOG_COLUMNS.map((column) => (
+                    <th
+                      key={column}
+                      scope="col"
+                      className="px-3 py-2 text-left text-xs font-medium text-muted-foreground"
                     >
-                      <td className="px-3 py-3">
-                        <div className="flex flex-col gap-1.5">
-                          <Skeleton className="h-3.5 w-44" />
-                          <Skeleton className="h-2.5 w-24" />
-                        </div>
-                      </td>
-                      <td className="px-3 py-3">
-                        <Skeleton className="h-5 w-16 rounded-full" />
-                      </td>
-                      <td className="px-3 py-3">
-                        <Skeleton className="h-3 w-10" />
-                      </td>
-                      <td className="px-3 py-3">
-                        <Skeleton className="h-5 w-14 rounded-full" />
-                      </td>
-                      <td className="px-3 py-3">
-                        <Skeleton className="h-3 w-16" />
-                      </td>
-                      <td className="px-3 py-3">
-                        <div className="flex gap-1.5">
-                          <Skeleton className="h-2.5 w-16" />
-                          <Skeleton className="h-2.5 w-20" />
-                        </div>
-                      </td>
-                    </tr>
-                  ))
-                : data?.items.map((item) => (
-                    <tr
-                      key={item.showId}
-                      onClick={() => setSelectedItem(item)}
-                      className="cursor-pointer border-b border-border transition-colors last:border-b-0 hover:bg-muted/50"
-                    >
-                      <td className="px-3 py-3 font-medium">{item.title}</td>
-                      <td className="px-3 py-3">
-                        <Badge variant="outline">
-                          {item.type === "Movie" ? "Película" : "Serie"}
-                        </Badge>
-                      </td>
-                      <td className="px-3 py-3">{item.releaseYear}</td>
-                      <td className="px-3 py-3">{item.rating ?? "NR"}</td>
-                      <td className="px-3 py-3">{item.duration}</td>
-                      <td className="px-3 py-3 text-muted-foreground">
-                        {item.genres.slice(0, 2).join(", ")}
-                      </td>
-                    </tr>
+                      {column}
+                    </th>
                   ))}
-            </tbody>
-          </table>
-        </div>
+                </tr>
+              </thead>
+              <tbody>
+                {isLoading
+                  ? Array.from({ length: SKELETON_ROW_COUNT }).map(
+                      (_, index) => (
+                        <tr
+                          key={index}
+                          className="border-b border-border last:border-b-0"
+                        >
+                          <td className="px-3 py-3">
+                            <div className="flex flex-col gap-1.5">
+                              <Skeleton className="h-3.5 w-44" />
+                              <Skeleton className="h-2.5 w-24" />
+                            </div>
+                          </td>
+                          <td className="px-3 py-3">
+                            <Skeleton className="h-5 w-16 rounded-full" />
+                          </td>
+                          <td className="px-3 py-3">
+                            <Skeleton className="h-3 w-10" />
+                          </td>
+                          <td className="px-3 py-3">
+                            <Skeleton className="h-5 w-14 rounded-full" />
+                          </td>
+                          <td className="px-3 py-3">
+                            <Skeleton className="h-3 w-16" />
+                          </td>
+                          <td className="px-3 py-3">
+                            <div className="flex gap-1.5">
+                              <Skeleton className="h-2.5 w-16" />
+                              <Skeleton className="h-2.5 w-20" />
+                            </div>
+                          </td>
+                        </tr>
+                      ),
+                    )
+                  : data?.items.map((item) => (
+                      <tr
+                        key={item.showId}
+                        onClick={() => setSelectedItem(item)}
+                        className="cursor-pointer border-b border-border transition-colors last:border-b-0 hover:bg-muted/50"
+                      >
+                        <td className="px-3 py-3 font-medium">{item.title}</td>
+                        <td className="px-3 py-3">
+                          <Badge variant="outline">
+                            {formatTypeLabel(item.type)}
+                          </Badge>
+                        </td>
+                        <td className="px-3 py-3">{item.releaseYear}</td>
+                        <td className="px-3 py-3">{item.rating ?? "NR"}</td>
+                        <td className="px-3 py-3">{item.duration}</td>
+                        <td className="px-3 py-3 text-muted-foreground">
+                          {formatGenrePreview(item.genres)}
+                        </td>
+                      </tr>
+                    ))}
+              </tbody>
+            </table>
+          </div>
+        </>
       )}
 
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         {isLoading || error ? (
           <Skeleton className="h-4 w-40" />
         ) : (
@@ -162,6 +220,7 @@ function CatalogResults({ catalogFilters, searchQuery }: CatalogResultsProps) {
           <Button
             variant="outline"
             size="sm"
+            className="flex-1 sm:flex-none"
             disabled={page <= 1}
             onClick={() => setPage((current) => Math.max(1, current - 1))}
           >
@@ -171,6 +230,7 @@ function CatalogResults({ catalogFilters, searchQuery }: CatalogResultsProps) {
           <Button
             variant="outline"
             size="sm"
+            className="flex-1 sm:flex-none"
             disabled={data ? page >= totalPages : true}
             onClick={() =>
               setPage((current) => Math.min(totalPages, current + 1))
