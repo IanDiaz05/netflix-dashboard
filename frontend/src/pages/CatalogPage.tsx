@@ -1,14 +1,6 @@
-import { DashboardPageSkeleton } from "@/components/skeletons/DashboardPageSkeleton"
-import { usePendingResource } from "@/hooks/usePendingResource"
-import { dashboardService } from "@/services/dashboardService"
+import { CatalogExplorer } from "@/components/widgets/CatalogExplorer"
 
+/** Catalog route: operational explorer with search, filters, and pagination. */
 export function CatalogPage() {
-  const catalog = usePendingResource(() => dashboardService.getCatalogItems())
-  const stats = usePendingResource(() => dashboardService.getGenreAndRatingStats())
-
-  if (catalog.isLoading || stats.isLoading) {
-    return <DashboardPageSkeleton kpiCount={2} chartCount={2} />
-  }
-
-  return null
+  return <CatalogExplorer />
 }
