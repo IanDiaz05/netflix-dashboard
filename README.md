@@ -1,19 +1,35 @@
-# Dashboard del Catálogo de Netflix
+# Netflix catalog analytics dashboard
 
-El objetivo principal de este proyecto es construir un dashboard interactivo para explorar el catálogo de Netflix. Queremos analizar los datos para entender mejor las tendencias de producción, descubrir cuáles son los géneros más populares, y visualizar la distribución geográfica del contenido a lo largo de los años.
+Interactive dashboard for exploring a Netflix content catalog: production trends, genre mix, and geographic distribution over time.
 
-Actualmente, el proyecto se encuentra en fase de desarrollo inicial (Fase 1). Por el momento, estamos trabajando en el entendimiento de los datos, la planificación de la arquitectura y la configuración de la infraestructura base.
+The project is in Phase 1 (scaffolding, documentation, and API/type contracts). UI charts and FastAPI endpoints are not implemented yet.
 
-## Arquitectura del Proyecto
+## Architecture
 
-El proyecto está diseñado bajo una arquitectura de tres capas:
-- Frontend: Interfaz de usuario construida con React, servida a través de Vercel.
-- Backend: API REST desarrollada en Python con FastAPI.
-- Base de datos: PostgreSQL administrado mediante contenedores en un servidor VPS propio.
+Three layers:
 
-## Integrantes del equipo
+- Frontend: React + TypeScript + Vite (this repository, `frontend/`), intended for Vercel.
+- Backend: FastAPI REST API (planned, `backend/`).
+- Database: PostgreSQL (planned).
+
+Details: [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md), [docs/DATA_CONTRACT.md](docs/DATA_CONTRACT.md), [docs/UI_GUIDELINES.md](docs/UI_GUIDELINES.md).
+
+## Frontend local setup
+
+```bash
+cd frontend
+cp .env.example .env
+pnpm install
+pnpm dev
+```
+
+Typecheck:
+
+```bash
+pnpm typecheck
+```
+
+## Team
+
 - Ian Diaz | 230301007
 - Emiliano Burgos | 230300973
-
----
-Nota: La documentación y las instrucciones para correr el proyecto localmente se agregarán en las próximas fases, una vez que el código funcional comience a integrarse.
