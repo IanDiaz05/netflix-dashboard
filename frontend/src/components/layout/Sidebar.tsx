@@ -1,5 +1,5 @@
 import { Clapperboard } from "lucide-react"
-import { NavLink } from "react-router-dom"
+import { NavLink, useLocation } from "react-router-dom"
 import { Separator } from "@/components/ui/separator"
 import { appRoutes } from "@/config/navigation"
 import { cn } from "@/lib/utils"
@@ -33,6 +33,8 @@ interface SidebarNavProps {
 
 /** Route list shared by the desktop rail and the mobile drawer. */
 export function SidebarNav({ onNavigate, className }: SidebarNavProps) {
+  const location = useLocation()
+
   return (
     <nav
       className={cn("flex flex-1 flex-col gap-1 p-3", className)}
@@ -41,7 +43,7 @@ export function SidebarNav({ onNavigate, className }: SidebarNavProps) {
       {appRoutes.map((route) => (
         <NavLink
           key={route.path}
-          to={route.path}
+          to={{ pathname: route.path, search: location.search }}
           end={route.path === "/"}
           onClick={onNavigate}
           className={({ isActive }) =>
