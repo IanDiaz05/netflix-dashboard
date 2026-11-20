@@ -11,6 +11,7 @@ import { DashboardFiltersContext } from "@/context/DashboardFiltersContext"
 import type { DashboardFiltersValue } from "@/context/DashboardFiltersContext"
 import type {
   ContentFormatFilter,
+  CountryFilter,
   MaturityRatingFilter,
   ReleasePeriodFilter,
 } from "@/types/filters"
@@ -54,6 +55,10 @@ export function DashboardFiltersProvider({ children }: { children: ReactNode }) 
     (value: MaturityRatingFilter) => setParam(FILTER_PARAM_KEYS.rating, value),
     [setParam],
   )
+  const setCountry = useCallback(
+    (value: CountryFilter) => setParam(FILTER_PARAM_KEYS.country, value),
+    [setParam],
+  )
   const clearFilters = useCallback(() => {
     setSearchParams(
       (previous) => {
@@ -72,15 +77,17 @@ export function DashboardFiltersProvider({ children }: { children: ReactNode }) 
       format: params.format,
       period: params.period,
       rating: params.rating,
+      country: params.country,
       catalogFilters: toCatalogFilters(params),
       activeFilterLabels: getActiveFilterLabels(params),
       hasActiveFilters: !isDefaultFilters(params),
       setFormat,
       setPeriod,
       setRating,
+      setCountry,
       clearFilters,
     }),
-    [params, setFormat, setPeriod, setRating, clearFilters],
+    [params, setFormat, setPeriod, setRating, setCountry, clearFilters],
   )
 
   return (

@@ -12,15 +12,19 @@ export type ReleasePeriodFilter = "all" | "last5" | "last10" | "classics"
 /** Maturity rating filter values, mapped to the `rating` dataset column. */
 export type MaturityRatingFilter = string | "all"
 
+/** Country filter: catalog country name, or `"all"` when unset. */
+export type CountryFilter = string | "all"
+
 /** Raw global filter selections mirrored into URL search params. */
 export interface DashboardFilterParams {
   format: ContentFormatFilter
   period: ReleasePeriodFilter
   rating: MaturityRatingFilter
+  country: CountryFilter
 }
 
 /** Keys of the global tactical filters, used for badge removal and URL params. */
-export type DashboardFilterKey = "format" | "period" | "rating"
+export type DashboardFilterKey = "format" | "period" | "rating" | "country"
 
 /** One active filter rendered as a removable badge, with its Spanish label. */
 export interface ActiveFilterLabel {

@@ -45,3 +45,15 @@ Typography: Geist Variable (`--font-sans`). Body `text-sm`; page titles in the h
 - Persistent left sidebar (~15rem), top header with the Spanish page title plus the global tactical filter strip (formato, período de estreno, clasificación), main canvas with `gap-6` sections.
 - Overview: KPI row then two chart cards.
 - Charts (later phase) should use tokenized colors only, Spanish titles, and short axis labels.
+
+## Responsive behavior
+
+Tailwind breakpoints: `sm` 640px, `md` 768px, `lg` 1024px, `xl` 1280px.
+
+- From `lg` up, the sidebar is a persistent 15rem rail and the filter strip stays visible in the header.
+- Below `lg`, the sidebar becomes a left slide-over opened from the header menu button. Selecting a route closes it, and the desktop rail is not rendered.
+- Below `md`, the filter strip collapses behind a "Filtros" toggle that shows the number of active filters. Open controls stack at full width with their labels above each select; clearing filters remains inside the panel.
+- Main canvas padding is `p-4` on phones and `p-6` from `sm` up.
+- Catalog: stacked result cards below `md`, the full table from `md` up (horizontal scroll when space is tight), and pagination stacked below `sm`.
+- Widget skeletons use responsive heights so the loading layout matches the resolved chart at every breakpoint.
+

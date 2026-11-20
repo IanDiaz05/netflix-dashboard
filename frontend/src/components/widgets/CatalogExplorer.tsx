@@ -16,14 +16,18 @@ import {
 } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Skeleton } from "@/components/ui/skeleton"
-import { useDashboardFilters } from "@/hooks/useDashboardFilters"
-import { usePendingResource } from "@/hooks/usePendingResource"
-import { dashboardService } from "@/services/dashboardService"
 import { DataErrorFallback } from "@/components/widgets/DataErrorFallback"
 import { TitleDetailSheet } from "@/components/widgets/TitleDetailSheet"
+import { useDashboardFilters } from "@/hooks/useDashboardFilters"
+import { useDebouncedValue } from "@/hooks/useDebouncedValue"
+import { usePendingResource } from "@/hooks/usePendingResource"
+import {
+  formatContentTypeBadge,
+  formatDuration,
+} from "@/lib/catalogFormatters"
+import { dashboardService } from "@/services/dashboardService"
 import type { CatalogFilters, CatalogItem } from "@/types/catalog"
 
-/** Column headers mirror the resolved table layout. */
 const CATALOG_COLUMNS = [
   "Título",
   "Tipo",
@@ -35,21 +39,39 @@ const CATALOG_COLUMNS = [
 
 const SKELETON_ROW_COUNT = 8
 const PAGE_SIZE = 20
+const SEARCH_DEBOUNCE_MS = 300
+const GENRE_BADGE_LIMIT = 2
 
 interface CatalogResultsProps {
   catalogFilters: CatalogFilters
   searchQuery: string
 }
 
-/**
- * Table, pagination, and detail slide-over for the current query.
- * Remounted by `CatalogExplorer` whenever the filters or search change,
- * which resets page and selection to their initial state.
- */
+function GenreBadges({ genres }: { genres: string[] }) {
+  if (genres.length === 0) {
+    return <span className="text-xs text-muted-foreground">Sin géneros</span>
+  }
+
+  const visible = genres.slice(0, GENRE_BADGE_LIMIT)
+  const extra = genres.length - visible.length
+
+  return (
+    <div className="flex flex-wrap gap-1">
+      {visible.map((genre) => (
+        <Badge key={genre} variant="outline">
+          {genre}
+        </Badge>
+      ))}
+      {extra > 0 ? (
+        <Badge variant="secondary">+{extra}</Badge>
+      ) : null}
+    </div>
+  )
+}
+
 function CatalogResults({ catalogFilters, searchQuery }: CatalogResultsProps) {
   const [page, setPage] = useState(1)
-  const [selectedItem, setSelectedItem] = useState<CatalogItem | null>(null)
-
+  const [selectedShowId, setSelectedShowId] = useState<string | null>(null)
 
   const { data, error, isLoading, retry } = usePendingResource(
     () =>
@@ -67,6 +89,11 @@ function CatalogResults({ catalogFilters, searchQuery }: CatalogResultsProps) {
   const totalPages = data
     ? Math.max(1, Math.ceil(data.total / data.pageSize))
     : 1
+  const shownCount = data?.items.length ?? 0
+
+  const openItem = (item: CatalogItem) => {
+    setSelectedShowId(item.showId)
+  }
 
   return (
     <>
@@ -77,91 +104,159 @@ function CatalogResults({ catalogFilters, searchQuery }: CatalogResultsProps) {
           </div>
         </div>
       ) : (
-        <div className="overflow-x-auto rounded-lg border border-border">
-          <table className="w-full text-sm">
-            <thead>
-              <tr className="border-b border-border bg-muted/50">
-                {CATALOG_COLUMNS.map((column) => (
-                  <th
-                    key={column}
-                    scope="col"
-                    className="px-3 py-2 text-left text-xs font-medium text-muted-foreground"
+        <>
+          <div className="flex flex-col gap-2 md:hidden">
+            {isLoading
+              ? Array.from({ length: SKELETON_ROW_COUNT }).map((_, index) => (
+                  <div
+                    key={index}
+                    className="flex flex-col gap-2 rounded-lg border border-border p-3"
                   >
-                    {column}
-                  </th>
+                    <div className="flex items-start justify-between gap-3">
+                      <Skeleton className="h-4 w-3/4" />
+                      <Skeleton className="h-5 w-16 rounded-full" />
+                    </div>
+                    <div className="flex gap-3">
+                      <Skeleton className="h-3 w-10" />
+                      <Skeleton className="h-3 w-10" />
+                      <Skeleton className="h-3 w-16" />
+                    </div>
+                    <Skeleton className="h-3 w-2/3" />
+                  </div>
+                ))
+              : data?.items.map((item) => (
+                  <button
+                    key={item.showId}
+                    type="button"
+                    onClick={() => openItem(item)}
+                    className="flex w-full flex-col gap-2 rounded-lg border border-border p-3 text-left transition-colors outline-none hover:bg-muted/50 focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50"
+                  >
+                    <div className="flex items-start justify-between gap-3">
+                      <span className="min-w-0 flex-1 text-sm font-medium break-words">
+                        {item.title}
+                      </span>
+                      <Badge variant="outline">
+                        {formatContentTypeBadge(item.type)}
+                      </Badge>
+                    </div>
+                    <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-muted-foreground">
+                      <span>{item.releaseYear}</span>
+                      <span>{item.rating ?? "NR"}</span>
+                      <span>{formatDuration(item)}</span>
+                    </div>
+                    <GenreBadges genres={item.genres} />
+                  </button>
                 ))}
-              </tr>
-            </thead>
-            <tbody>
-              {isLoading
-                ? Array.from({ length: SKELETON_ROW_COUNT }).map((_, index) => (
-                    <tr
-                      key={index}
-                      className="border-b border-border last:border-b-0"
+          </div>
+
+          <div className="hidden overflow-x-auto rounded-lg border border-border md:block">
+            <table className="w-full min-w-[40rem] text-sm">
+              <thead>
+                <tr className="border-b border-border bg-muted/50">
+                  {CATALOG_COLUMNS.map((column) => (
+                    <th
+                      key={column}
+                      scope="col"
+                      className="px-3 py-2 text-left text-xs font-medium text-muted-foreground"
                     >
-                      <td className="px-3 py-3">
-                        <div className="flex flex-col gap-1.5">
-                          <Skeleton className="h-3.5 w-44" />
-                          <Skeleton className="h-2.5 w-24" />
-                        </div>
-                      </td>
-                      <td className="px-3 py-3">
-                        <Skeleton className="h-5 w-16 rounded-full" />
-                      </td>
-                      <td className="px-3 py-3">
-                        <Skeleton className="h-3 w-10" />
-                      </td>
-                      <td className="px-3 py-3">
-                        <Skeleton className="h-5 w-14 rounded-full" />
-                      </td>
-                      <td className="px-3 py-3">
-                        <Skeleton className="h-3 w-16" />
-                      </td>
-                      <td className="px-3 py-3">
-                        <div className="flex gap-1.5">
-                          <Skeleton className="h-2.5 w-16" />
-                          <Skeleton className="h-2.5 w-20" />
-                        </div>
-                      </td>
-                    </tr>
-                  ))
-                : data?.items.map((item) => (
-                    <tr
-                      key={item.showId}
-                      onClick={() => setSelectedItem(item)}
-                      className="cursor-pointer border-b border-border transition-colors last:border-b-0 hover:bg-muted/50"
-                    >
-                      <td className="px-3 py-3 font-medium">{item.title}</td>
-                      <td className="px-3 py-3">
-                        <Badge variant="outline">
-                          {item.type === "Movie" ? "Película" : "Serie"}
-                        </Badge>
-                      </td>
-                      <td className="px-3 py-3">{item.releaseYear}</td>
-                      <td className="px-3 py-3">{item.rating ?? "NR"}</td>
-                      <td className="px-3 py-3">{item.duration}</td>
-                      <td className="px-3 py-3 text-muted-foreground">
-                        {item.genres.slice(0, 2).join(", ")}
-                      </td>
-                    </tr>
+                      {column}
+                    </th>
                   ))}
-            </tbody>
-          </table>
-        </div>
+                </tr>
+              </thead>
+              <tbody>
+                {isLoading
+                  ? Array.from({ length: SKELETON_ROW_COUNT }).map(
+                      (_, index) => (
+                        <tr
+                          key={index}
+                          className="border-b border-border last:border-b-0"
+                        >
+                          <td className="px-3 py-3">
+                            <div className="flex flex-col gap-1.5">
+                              <Skeleton className="h-3.5 w-44" />
+                              <Skeleton className="h-2.5 w-24" />
+                            </div>
+                          </td>
+                          <td className="px-3 py-3">
+                            <Skeleton className="h-5 w-16 rounded-full" />
+                          </td>
+                          <td className="px-3 py-3">
+                            <Skeleton className="h-3 w-10" />
+                          </td>
+                          <td className="px-3 py-3">
+                            <Skeleton className="h-5 w-14 rounded-full" />
+                          </td>
+                          <td className="px-3 py-3">
+                            <Skeleton className="h-3 w-16" />
+                          </td>
+                          <td className="px-3 py-3">
+                            <div className="flex gap-1.5">
+                              <Skeleton className="h-2.5 w-16" />
+                              <Skeleton className="h-2.5 w-20" />
+                            </div>
+                          </td>
+                        </tr>
+                      ),
+                    )
+                  : data?.items.map((item) => (
+                      <tr
+                        key={item.showId}
+                        onClick={() => openItem(item)}
+                        className="cursor-pointer border-b border-border transition-colors last:border-b-0 hover:bg-muted/50"
+                      >
+                        <td className="px-3 py-3 font-medium">
+                          <button
+                            type="button"
+                            className="text-left font-medium"
+                            onClick={(event) => {
+                              event.stopPropagation()
+                              openItem(item)
+                            }}
+                          >
+                            {item.title}
+                          </button>
+                        </td>
+                        <td className="px-3 py-3">
+                          <Badge variant="outline">
+                            {formatContentTypeBadge(item.type)}
+                          </Badge>
+                        </td>
+                        <td className="px-3 py-3">{item.releaseYear}</td>
+                        <td className="px-3 py-3">{item.rating ?? "NR"}</td>
+                        <td className="px-3 py-3">{formatDuration(item)}</td>
+                        <td className="px-3 py-3">
+                          <GenreBadges genres={item.genres} />
+                        </td>
+                      </tr>
+                    ))}
+              </tbody>
+            </table>
+          </div>
+        </>
       )}
 
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         {isLoading || error ? (
-          <Skeleton className="h-4 w-40" />
+          <div className="flex flex-col gap-1.5">
+            <Skeleton className="h-4 w-32" />
+            <Skeleton className="h-3 w-44" />
+          </div>
         ) : (
-          <p className="text-xs text-muted-foreground">
-            Página {data?.page} de {totalPages}
-          </p>
+          <div className="flex flex-col gap-0.5">
+            <p className="text-xs text-muted-foreground">
+              Página {data?.page} de {totalPages}
+            </p>
+            <p className="text-xs text-muted-foreground">
+              Mostrando {shownCount} de {data?.total ?? 0} títulos
+            </p>
+          </div>
         )}
         <div className="flex gap-2">
           <Button
             variant="outline"
             size="sm"
+            className="flex-1 sm:flex-none"
             disabled={page <= 1}
             onClick={() => setPage((current) => Math.max(1, current - 1))}
           >
@@ -171,6 +266,7 @@ function CatalogResults({ catalogFilters, searchQuery }: CatalogResultsProps) {
           <Button
             variant="outline"
             size="sm"
+            className="flex-1 sm:flex-none"
             disabled={data ? page >= totalPages : true}
             onClick={() =>
               setPage((current) => Math.min(totalPages, current + 1))
@@ -183,10 +279,10 @@ function CatalogResults({ catalogFilters, searchQuery }: CatalogResultsProps) {
       </div>
 
       <TitleDetailSheet
-        item={selectedItem}
+        showId={selectedShowId}
         onOpenChange={(open) => {
           if (!open) {
-            setSelectedItem(null)
+            setSelectedShowId(null)
           }
         }}
       />
@@ -194,12 +290,6 @@ function CatalogResults({ catalogFilters, searchQuery }: CatalogResultsProps) {
   )
 }
 
-/**
- * Operational catalog explorer owning its own data lifecycle.
- * The search input and active filter badges are interactive from Phase 2;
- * the table body, pagination info, and detail slide-over stay in their
- * skeleton / closed state until FastAPI is connected.
- */
 export function CatalogExplorer() {
   const {
     catalogFilters,
@@ -207,8 +297,10 @@ export function CatalogExplorer() {
     setFormat,
     setPeriod,
     setRating,
+    setCountry,
   } = useDashboardFilters()
   const [searchValue, setSearchValue] = useState("")
+  const debouncedQuery = useDebouncedValue(searchValue, SEARCH_DEBOUNCE_MS)
 
   const clearBadge = (key: string) => {
     if (key === "format") {
@@ -217,6 +309,8 @@ export function CatalogExplorer() {
       setPeriod("all")
     } else if (key === "rating") {
       setRating("all")
+    } else if (key === "country") {
+      setCountry("all")
     }
   }
 
@@ -268,9 +362,9 @@ export function CatalogExplorer() {
         </div>
 
         <CatalogResults
-          key={`${JSON.stringify(catalogFilters)}|${searchValue}`}
+          key={`${JSON.stringify(catalogFilters)}|${debouncedQuery}`}
           catalogFilters={catalogFilters}
-          searchQuery={searchValue}
+          searchQuery={debouncedQuery}
         />
       </CardContent>
     </Card>

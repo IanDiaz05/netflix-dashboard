@@ -54,7 +54,7 @@ backend/
 | `/catalog` | `CatalogPage` | Searchable catalog with filter badges and a detail slide-over |
 | `*` | redirect to `/` | Unknown routes |
 
-Shell chrome is `MainLayout` (`Sidebar` + `Header` + `Outlet`). Route labels are Spanish; route paths and file names are English.
+Shell chrome is `MainLayout` (`Sidebar` + `Header` + `Outlet`). Route labels are Spanish; route paths and file names are English. Below `lg`, `Sidebar` is replaced by a slide-over that reuses `SidebarBrand` and `SidebarNav`, opened from `Header`; the filter strip collapses behind a toggle below `md`.
 
 ## State and service conventions
 

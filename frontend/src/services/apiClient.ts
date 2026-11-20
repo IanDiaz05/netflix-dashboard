@@ -10,22 +10,24 @@ export class ApiError extends Error {
   }
 }
 
-function getBaseUrl(): string {
-  const baseUrl = import.meta.env.VITE_API_BASE_URL
+const DEFAULT_API_BASE_URL = "http://localhost:8000/api"
 
-  if (!baseUrl) {
-    throw new ApiError(
-      "VITE_API_BASE_URL is not configured",
-      0,
-      "/",
-    )
-  }
+export function getApiBaseUrl(): string {
+  const configured = import.meta.env.VITE_API_BASE_URL
+  const baseUrl =
+    configured && configured.trim().length > 0
+      ? configured
+      : DEFAULT_API_BASE_URL
 
   return baseUrl.replace(/\/$/, "")
 }
 
+function getApiOrigin(): string {
+  return getApiBaseUrl().replace(/\/api$/, "")
+}
+
 /**
- * Fetch wrapper for the future FastAPI backend.
+ * Fetch wrapper for the FastAPI backend.
  * Throws `ApiError` on non-OK responses or malformed JSON.
  */
 export async function apiClient<T>(
@@ -33,7 +35,7 @@ export async function apiClient<T>(
   init?: RequestInit,
 ): Promise<T> {
   const normalizedPath = path.startsWith("/") ? path : `/${path}`
-  const url = `${getBaseUrl()}${normalizedPath}`
+  const url = `${getApiBaseUrl()}${normalizedPath}`
 
   let response: Response
 
@@ -66,5 +68,29 @@ export async function apiClient<T>(
     return (await response.json()) as T
   } catch {
     throw new ApiError("Response was not valid JSON", response.status, normalizedPath)
+  }
+}
+
+/** Lightweight liveness check against the API origin `/health` endpoint. */
+export async function pingHealth(): Promise<void> {
+  const path = "/health"
+  const url = `${getApiOrigin()}${path}`
+
+  let response: Response
+
+  try {
+    response = await fetch(url, {
+      headers: { Accept: "application/json" },
+    })
+  } catch {
+    throw new ApiError("Network request failed", 0, path)
+  }
+
+  if (!response.ok) {
+    throw new ApiError(
+      `Request failed with status ${response.status}`,
+      response.status,
+      path,
+    )
   }
 }

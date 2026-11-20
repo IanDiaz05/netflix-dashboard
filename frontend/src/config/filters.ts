@@ -1,6 +1,7 @@
 import type {
   CatalogFilters,
 } from "@/types/catalog"
+import { getSpanishCountryName } from "@/lib/countryNames"
 import type {
   ActiveFilterLabel,
   ContentFormatFilter,
@@ -20,12 +21,14 @@ export const FILTER_PARAM_KEYS: Record<DashboardFilterKey, string> = {
   format: "format",
   period: "period",
   rating: "rating",
+  country: "country",
 }
 
 export const defaultFilterParams: DashboardFilterParams = {
   format: "all",
   period: "all",
   rating: "all",
+  country: "all",
 }
 
 export const contentFormatOptions: FilterOption<ContentFormatFilter>[] = [
@@ -84,14 +87,27 @@ export function parseFilterParams(
         searchParams.get(FILTER_PARAM_KEYS.rating),
         maturityRatingOptions,
       ) ?? defaultFilterParams.rating,
+    country: parseCountryParam(searchParams.get(FILTER_PARAM_KEYS.country)),
   }
+}
+
+function parseCountryParam(raw: string | null): DashboardFilterParams["country"] {
+  if (!raw) {
+    return defaultFilterParams.country
+  }
+  const trimmed = raw.trim()
+  if (trimmed.length === 0 || trimmed === "all") {
+    return defaultFilterParams.country
+  }
+  return trimmed
 }
 
 export function isDefaultFilters(params: DashboardFilterParams): boolean {
   return (
     params.format === defaultFilterParams.format &&
     params.period === defaultFilterParams.period &&
-    params.rating === defaultFilterParams.rating
+    params.rating === defaultFilterParams.rating &&
+    params.country === defaultFilterParams.country
   )
 }
 
@@ -109,6 +125,9 @@ export function toCatalogFilters(
   }
   if (params.rating !== "all") {
     filters.rating = params.rating
+  }
+  if (params.country !== "all") {
+    filters.country = params.country
   }
 
   const currentYear = new Date().getFullYear()
@@ -153,6 +172,12 @@ export function getActiveFilterLabels(
     if (option) {
       labels.push({ key: "rating", label: option.label })
     }
+  }
+  if (params.country !== "all") {
+    labels.push({
+      key: "country",
+      label: getSpanishCountryName(params.country),
+    })
   }
 
   return labels

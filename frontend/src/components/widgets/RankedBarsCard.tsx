@@ -55,7 +55,7 @@ export function RankedBarsCard<T>({
             {Array.from({ length: barCount }).map((_, index) => (
               <div
                 key={index}
-                className="grid grid-cols-[7rem_1fr_2.5rem] items-center gap-3"
+                className="grid grid-cols-[4.5rem_1fr_2rem] items-center gap-2 sm:grid-cols-[7rem_1fr_2.5rem] sm:gap-3"
               >
                 <Skeleton className="h-3 w-full" />
                 <Skeleton
