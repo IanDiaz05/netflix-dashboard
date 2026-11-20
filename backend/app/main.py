@@ -3,6 +3,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy import text
 from sqlalchemy.orm import Session
 
+from app.api.routes import analytics, catalog
 from app.core.config import settings
 from app.core.database import get_db
 
@@ -15,6 +16,9 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+app.include_router(analytics.router, prefix="/api")
+app.include_router(catalog.router, prefix="/api")
 
 
 @app.get("/health")
