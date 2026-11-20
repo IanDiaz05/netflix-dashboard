@@ -1,6 +1,6 @@
 from typing import Literal
 
-from pydantic import BaseModel, ConfigDict
+from pydantic import AliasChoices, BaseModel, ConfigDict, Field
 from pydantic.alias_generators import to_camel
 
 ContentType = Literal["Movie", "TV Show"]
@@ -27,6 +27,8 @@ class DashboardKPIs(CamelModel):
 
 
 class ChartDataPoint(BaseModel):
+    model_config = ConfigDict(exclude_none=True)
+
     label: str
     value: float
     category: str | None = None
@@ -63,11 +65,43 @@ class PaginatedCatalogResponse(CamelModel):
 class CatalogFilters(CamelModel):
     query: str | None = None
     type: ContentType | Literal["all"] | None = None
-    release_year_from: int | None = None
-    release_year_to: int | None = None
+    release_year_from: int | None = Field(
+        default=None,
+        validation_alias=AliasChoices("releaseYearFrom", "release_year_from"),
+    )
+    release_year_to: int | None = Field(
+        default=None,
+        validation_alias=AliasChoices("releaseYearTo", "release_year_to"),
+    )
     country: str | None = None
     genre: str | None = None
     rating: str | None = None
+
+
+class CatalogPagination(CamelModel):
+    page: int = Field(default=1, ge=1)
+    page_size: int = Field(
+        default=20,
+        ge=1,
+        le=100,
+        validation_alias=AliasChoices("pageSize", "page_size"),
+    )
+
+
+class GenreAndRatingStats(CamelModel):
+    genres: list[ChartDataPoint]
+    ratings: list[ChartDataPoint]
+
+
+class DurationDistribution(CamelModel):
+    minutes: list[ChartDataPoint]
+    seasons: list[ChartDataPoint]
+
+
+class GenreAndTalentStats(CamelModel):
+    genres: list[ChartDataPoint]
+    directors: list[ChartDataPoint]
+    cast_members: list[ChartDataPoint]
 
 
 CatalogListResponse = PaginatedCatalogResponse
