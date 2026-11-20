@@ -3,6 +3,7 @@ import type { CatalogFilters } from "@/types/catalog"
 import type {
   ActiveFilterLabel,
   ContentFormatFilter,
+  CountryFilter,
   MaturityRatingFilter,
   ReleasePeriodFilter,
 } from "@/types/filters"
@@ -11,6 +12,7 @@ export interface DashboardFiltersValue {
   format: ContentFormatFilter
   period: ReleasePeriodFilter
   rating: MaturityRatingFilter
+  country: CountryFilter
   /** Filters resolved against the `CatalogFilters` contract for service calls. */
   catalogFilters: CatalogFilters
   /** Removable badges for the active filters, with Spanish labels. */
@@ -19,6 +21,7 @@ export interface DashboardFiltersValue {
   setFormat: (value: ContentFormatFilter) => void
   setPeriod: (value: ReleasePeriodFilter) => void
   setRating: (value: MaturityRatingFilter) => void
+  setCountry: (value: CountryFilter) => void
   clearFilters: () => void
 }
 
