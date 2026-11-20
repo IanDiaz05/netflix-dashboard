@@ -1,8 +1,8 @@
 import { useState } from "react"
 import { MenuIcon } from "lucide-react"
 import { useLocation } from "react-router-dom"
-import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
+import { ApiStatusBadge } from "@/components/layout/ApiStatusBadge"
 import { Separator } from "@/components/ui/separator"
 import {
   Sheet,
@@ -37,9 +37,7 @@ export function Header() {
         <h1 className="min-w-0 flex-1 truncate text-sm font-medium tracking-tight">
           {currentRoute.title}
         </h1>
-        <Badge variant="outline" className="shrink-0">
-          Backend pendiente
-        </Badge>
+        <ApiStatusBadge />
       </div>
       <Separator />
       <DashboardFilterBar />
