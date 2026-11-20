@@ -16,14 +16,18 @@ import {
 } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Skeleton } from "@/components/ui/skeleton"
-import { useDashboardFilters } from "@/hooks/useDashboardFilters"
-import { usePendingResource } from "@/hooks/usePendingResource"
-import { dashboardService } from "@/services/dashboardService"
 import { DataErrorFallback } from "@/components/widgets/DataErrorFallback"
 import { TitleDetailSheet } from "@/components/widgets/TitleDetailSheet"
+import { useDashboardFilters } from "@/hooks/useDashboardFilters"
+import { useDebouncedValue } from "@/hooks/useDebouncedValue"
+import { usePendingResource } from "@/hooks/usePendingResource"
+import {
+  formatContentTypeBadge,
+  formatDuration,
+} from "@/lib/catalogFormatters"
+import { dashboardService } from "@/services/dashboardService"
 import type { CatalogFilters, CatalogItem } from "@/types/catalog"
 
-/** Column headers mirror the resolved table layout. */
 const CATALOG_COLUMNS = [
   "Título",
   "Tipo",
@@ -35,29 +39,39 @@ const CATALOG_COLUMNS = [
 
 const SKELETON_ROW_COUNT = 8
 const PAGE_SIZE = 20
-
-function formatTypeLabel(type: CatalogItem["type"]): string {
-  return type === "Movie" ? "Película" : "Serie"
-}
-
-function formatGenrePreview(genres: string[]): string {
-  return genres.length > 0 ? genres.slice(0, 2).join(", ") : "Sin géneros"
-}
+const SEARCH_DEBOUNCE_MS = 300
+const GENRE_BADGE_LIMIT = 2
 
 interface CatalogResultsProps {
   catalogFilters: CatalogFilters
   searchQuery: string
 }
 
-/**
- * Table, pagination, and detail slide-over for the current query.
- * Remounted by `CatalogExplorer` whenever the filters or search change,
- * which resets page and selection to their initial state.
- */
+function GenreBadges({ genres }: { genres: string[] }) {
+  if (genres.length === 0) {
+    return <span className="text-xs text-muted-foreground">Sin géneros</span>
+  }
+
+  const visible = genres.slice(0, GENRE_BADGE_LIMIT)
+  const extra = genres.length - visible.length
+
+  return (
+    <div className="flex flex-wrap gap-1">
+      {visible.map((genre) => (
+        <Badge key={genre} variant="outline">
+          {genre}
+        </Badge>
+      ))}
+      {extra > 0 ? (
+        <Badge variant="secondary">+{extra}</Badge>
+      ) : null}
+    </div>
+  )
+}
+
 function CatalogResults({ catalogFilters, searchQuery }: CatalogResultsProps) {
   const [page, setPage] = useState(1)
-  const [selectedItem, setSelectedItem] = useState<CatalogItem | null>(null)
-
+  const [selectedShowId, setSelectedShowId] = useState<string | null>(null)
 
   const { data, error, isLoading, retry } = usePendingResource(
     () =>
@@ -75,6 +89,11 @@ function CatalogResults({ catalogFilters, searchQuery }: CatalogResultsProps) {
   const totalPages = data
     ? Math.max(1, Math.ceil(data.total / data.pageSize))
     : 1
+  const shownCount = data?.items.length ?? 0
+
+  const openItem = (item: CatalogItem) => {
+    setSelectedShowId(item.showId)
+  }
 
   return (
     <>
@@ -109,7 +128,7 @@ function CatalogResults({ catalogFilters, searchQuery }: CatalogResultsProps) {
                   <button
                     key={item.showId}
                     type="button"
-                    onClick={() => setSelectedItem(item)}
+                    onClick={() => openItem(item)}
                     className="flex w-full flex-col gap-2 rounded-lg border border-border p-3 text-left transition-colors outline-none hover:bg-muted/50 focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50"
                   >
                     <div className="flex items-start justify-between gap-3">
@@ -117,17 +136,15 @@ function CatalogResults({ catalogFilters, searchQuery }: CatalogResultsProps) {
                         {item.title}
                       </span>
                       <Badge variant="outline">
-                        {formatTypeLabel(item.type)}
+                        {formatContentTypeBadge(item.type)}
                       </Badge>
                     </div>
                     <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-muted-foreground">
                       <span>{item.releaseYear}</span>
                       <span>{item.rating ?? "NR"}</span>
-                      <span>{item.duration}</span>
+                      <span>{formatDuration(item)}</span>
                     </div>
-                    <p className="line-clamp-2 text-xs text-muted-foreground">
-                      {formatGenrePreview(item.genres)}
-                    </p>
+                    <GenreBadges genres={item.genres} />
                   </button>
                 ))}
           </div>
@@ -185,20 +202,31 @@ function CatalogResults({ catalogFilters, searchQuery }: CatalogResultsProps) {
                   : data?.items.map((item) => (
                       <tr
                         key={item.showId}
-                        onClick={() => setSelectedItem(item)}
+                        onClick={() => openItem(item)}
                         className="cursor-pointer border-b border-border transition-colors last:border-b-0 hover:bg-muted/50"
                       >
-                        <td className="px-3 py-3 font-medium">{item.title}</td>
+                        <td className="px-3 py-3 font-medium">
+                          <button
+                            type="button"
+                            className="text-left font-medium"
+                            onClick={(event) => {
+                              event.stopPropagation()
+                              openItem(item)
+                            }}
+                          >
+                            {item.title}
+                          </button>
+                        </td>
                         <td className="px-3 py-3">
                           <Badge variant="outline">
-                            {formatTypeLabel(item.type)}
+                            {formatContentTypeBadge(item.type)}
                           </Badge>
                         </td>
                         <td className="px-3 py-3">{item.releaseYear}</td>
                         <td className="px-3 py-3">{item.rating ?? "NR"}</td>
-                        <td className="px-3 py-3">{item.duration}</td>
-                        <td className="px-3 py-3 text-muted-foreground">
-                          {formatGenrePreview(item.genres)}
+                        <td className="px-3 py-3">{formatDuration(item)}</td>
+                        <td className="px-3 py-3">
+                          <GenreBadges genres={item.genres} />
                         </td>
                       </tr>
                     ))}
@@ -210,11 +238,19 @@ function CatalogResults({ catalogFilters, searchQuery }: CatalogResultsProps) {
 
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         {isLoading || error ? (
-          <Skeleton className="h-4 w-40" />
+          <div className="flex flex-col gap-1.5">
+            <Skeleton className="h-4 w-32" />
+            <Skeleton className="h-3 w-44" />
+          </div>
         ) : (
-          <p className="text-xs text-muted-foreground">
-            Página {data?.page} de {totalPages}
-          </p>
+          <div className="flex flex-col gap-0.5">
+            <p className="text-xs text-muted-foreground">
+              Página {data?.page} de {totalPages}
+            </p>
+            <p className="text-xs text-muted-foreground">
+              Mostrando {shownCount} de {data?.total ?? 0} títulos
+            </p>
+          </div>
         )}
         <div className="flex gap-2">
           <Button
@@ -243,10 +279,10 @@ function CatalogResults({ catalogFilters, searchQuery }: CatalogResultsProps) {
       </div>
 
       <TitleDetailSheet
-        item={selectedItem}
+        showId={selectedShowId}
         onOpenChange={(open) => {
           if (!open) {
-            setSelectedItem(null)
+            setSelectedShowId(null)
           }
         }}
       />
@@ -254,12 +290,6 @@ function CatalogResults({ catalogFilters, searchQuery }: CatalogResultsProps) {
   )
 }
 
-/**
- * Operational catalog explorer owning its own data lifecycle.
- * The search input and active filter badges are interactive from Phase 2;
- * the table body, pagination info, and detail slide-over stay in their
- * skeleton / closed state until FastAPI is connected.
- */
 export function CatalogExplorer() {
   const {
     catalogFilters,
@@ -267,8 +297,10 @@ export function CatalogExplorer() {
     setFormat,
     setPeriod,
     setRating,
+    setCountry,
   } = useDashboardFilters()
   const [searchValue, setSearchValue] = useState("")
+  const debouncedQuery = useDebouncedValue(searchValue, SEARCH_DEBOUNCE_MS)
 
   const clearBadge = (key: string) => {
     if (key === "format") {
@@ -277,6 +309,8 @@ export function CatalogExplorer() {
       setPeriod("all")
     } else if (key === "rating") {
       setRating("all")
+    } else if (key === "country") {
+      setCountry("all")
     }
   }
 
@@ -328,9 +362,9 @@ export function CatalogExplorer() {
         </div>
 
         <CatalogResults
-          key={`${JSON.stringify(catalogFilters)}|${searchValue}`}
+          key={`${JSON.stringify(catalogFilters)}|${debouncedQuery}`}
           catalogFilters={catalogFilters}
-          searchQuery={searchValue}
+          searchQuery={debouncedQuery}
         />
       </CardContent>
     </Card>
